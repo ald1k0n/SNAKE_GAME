@@ -59,7 +59,7 @@ int main() {
 	transform = mat4(1);
 	transform1 = mat4(1);
 	
-	Shader shaderClass, shaderClass1;
+	Shader shaderClass, shaderClass1; // создаем объект шейдер класса для компиляции шедера
 	
 	GLFWwindow* window;
 	if (!glfwInit())
@@ -78,11 +78,11 @@ int main() {
 	glewInit();
 	glEnable(GL_DEPTH_TEST);
 
-	bindCube(cubeVAO, cubeVBO, 0.5f);
+	bindCube(cubeVAO, cubeVBO, 0.5f); // тут мы передаем ВАО, ВБО и размер нашего куба
 	bindCube(cubeVAO1, cubeVBO1, 0.3f);
 
-	shaderClass.setShaders(vsh,fsh);
-	shader = shaderClass.getProgram();
+	shaderClass.setShaders(vsh,fsh); // передаем в метод наши шейдары
+	shader = shaderClass.getProgram(); // так же получаем готовую программу
 
 	shaderClass1.setShaders(vsh1, fsh1);
 	shader1 = shaderClass1.getProgram();
@@ -102,8 +102,9 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-		drawCube(shader, cubeVAO, .5f, transform);
-		drawCube(shader1, cubeVAO1, .3f, transform1);
+		transform = rotate(transform, 0.001f, vec3(0.5f, 0.5f, 0.5f));
+		drawCube(shader, cubeVAO, .5f, transform); // функция для отрисовки куба, transform можем не передавать, тогда не будет анимации
+		drawCube(shader1, cubeVAO1, .3f);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

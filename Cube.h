@@ -58,10 +58,12 @@ void bindCube(GLuint& VAO, GLuint& VBO, float size) {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 }
 
-void drawCube(GLuint& program, GLuint& VAO, float size, mat4& transformation) {
+mat4 initialTransform = mat4(1);
+
+void drawCube(GLuint& program, GLuint& VAO, float size, mat4& transformation = initialTransform) {
 	glUseProgram(program);
 	glBindVertexArray(VAO);
-	transformation = rotate(transformation, 0.001f, vec3(0.5f, 0.5f, 0.5f));
+	//transformation = rotate(transformation, 0.001f, vec3(0.5f, 0.5f, 0.5f));
 	glUniformMatrix4fv(glGetUniformLocation(program, "transform"), 1, GL_FALSE, value_ptr<float>(transformation));
 	glDrawArrays(GL_QUADS, 0, getCubeVertices(size).size() / 3);
 }
