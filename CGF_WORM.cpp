@@ -1,5 +1,6 @@
 ﻿#include "Shader.h"
 #include "Cube.h"
+#include "Board.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <GL/freeglut.h>
@@ -17,7 +18,6 @@ string vsh = R"(
     layout(location = 0) in vec3 position;
 	uniform mat4 transform;
 
-
     void main() {
         gl_Position = transform * vec4(position, 1.0);
     }
@@ -32,35 +32,14 @@ string fsh = R"(
 	}
 )";
 
-string vsh1 = R"(
-    #version 330 core
-    layout(location = 0) in vec3 position;
-	uniform mat4 transform;
-
-    void main() {
-        gl_Position = transform * vec4(position, 1.0);
-    }
-)";
-
-
-string fsh1 = R"(
-	#version 330 core
-	layout(location = 0) out vec4 color;
-	void main() {
-		color = vec4(.8, 0.3, 0.01, 1.0);
-	}
-)";
-
 int main() {
-	GLuint shader, shader1;
-	GLuint cubeVAO, cubeVBO, cubeVAO1, cubeVBO1;
-	mat4 transform, transform1;
+	GLuint boardShaderProgram, cubeShaderProgram;
+	GLuint boardVAO, boardVBO, boardEBO, cubeVAO, cubeVBO;
 
-	transform = mat4(1);
-	transform1 = mat4(1);
-	
-	Shader shaderClass, shaderClass1; // создаем объект шейдер класса для компиляции шедера
-	
+	mat4 cubeTransform = mat4(1);
+
+	Shader boardShader, cubeShader;
+
 	GLFWwindow* window;
 	if (!glfwInit())
 		exit(EXIT_FAILURE);
@@ -77,34 +56,25 @@ int main() {
 	glfwMakeContextCurrent(window);
 	glewInit();
 	glEnable(GL_DEPTH_TEST);
+	cubeShader.setShaders(vsh, fsh);
+	cubeShaderProgram = cubeShader.getProgram();
 
-	bindCube(cubeVAO, cubeVBO, 0.5f); // тут мы передаем ВАО, ВБО и размер нашего куба
-	bindCube(cubeVAO1, cubeVBO1, 0.3f);
+	boardShader.setShaders(boardVsh, boardFsh);
+	boardShaderProgram = boardShader.getProgram();
+	glUniformMatrix4fv(glGetUniformLocation(cubeShaderProgram, "transform"), 1, GL_FALSE, value_ptr(cameraView));
 
-	shaderClass.setShaders(vsh,fsh); // передаем в метод наши шейдары
-	shader = shaderClass.getProgram(); // так же получаем готовую программу
-
-	shaderClass1.setShaders(vsh1, fsh1);
-	shader1 = shaderClass1.getProgram();
-
-	transform = translate(transform, vec3(-.5, 0, 0));
-	glUniformMatrix4fv(glGetUniformLocation(shader, "transform"), 1, GL_FALSE, value_ptr(transform));
-
-	transform1 = translate(transform1, vec3(.5, .5, 0));
-	glUniformMatrix4fv(glGetUniformLocation(shader1, "transform"), 1, GL_FALSE, value_ptr(transform1));
-
-
-	glUseProgram(shader);
-	glUseProgram(shader1);
-
+	bindCube(cubeVAO, cubeVBO, .5f);
+	bindBoard(boardVAO, boardVBO, boardEBO, boardShaderProgram);
+	
+	glUseProgram(boardShaderProgram);
+	glUseProgram(cubeShaderProgram);
 
 	while (!glfwWindowShouldClose(window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-
-		transform = rotate(transform, 0.001f, vec3(0.5f, 0.5f, 0.5f));
-		drawCube(shader, cubeVAO, .5f, transform); // функция для отрисовки куба, transform можем не передавать, тогда не будет анимации
-		drawCube(shader1, cubeVAO1, .3f);
+		
+		drawBoard(boardShaderProgram, boardVAO);
+		drawCube(cubeShaderProgram, cubeVAO,.5f, cameraView);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
