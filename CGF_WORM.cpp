@@ -10,19 +10,35 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
-
-
 using namespace std;
 using namespace glm;
 
+string vsh = R"(
+	#version 330 core
+	layout(location = 0) in vec3 pos;
+	uniform mat4 transform;
+	void main() {
+		gl_Position = transform * vec4(pos, 1.0);
+	}
+)";
+
+string fsh = R"(
+	#version 330 core
+	out vec4 color;
+	void main() {
+		color = vec4(1.0);
+	}
+)";
+
+vec3 lightPosition = vec3(0.5, 0.7, 0.9);
 
 int main() {
-	GLuint boardShaderProgram;
-	GLuint boardVAO, boardVBO, boardEBO;
+	GLuint boardShaderProgram, lightObjectProgram;
+	GLuint boardVAO, boardVBO, boardEBO, lightObjVAO, lightObjVBO;
 
-	mat4 cubeTransform = mat4(1);
+	mat4 lightTransform = mat4(1);
 
-	Shader boardShader;
+	Shader boardShader, lightShader;
 
 	GLFWwindow* window;
 	if (!glfwInit())
@@ -44,16 +60,24 @@ int main() {
 
 	boardShader.setShaders(boardVsh, boardFsh);
 	boardShaderProgram = boardShader.getProgram();
+
+	lightShader.setShaders(vsh, fsh);
+	lightObjectProgram = lightShader.getProgram();
+	bindCube(lightObjVAO, lightObjVBO, 0.3f);
+
 	bindBoard(boardVAO, boardVBO, boardEBO, boardShaderProgram);
 	loadTexture();
 
+	glUseProgram(lightObjectProgram);
 	glUseProgram(boardShaderProgram);
 	glUniform1i(glGetUniformLocation(boardShaderProgram, "texture1"), 0);
 
+	lightTransform = translate(cameraView, lightPosition);
+
 	while (!glfwWindowShouldClose(window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		
+
+		drawCube(lightObjectProgram, lightObjVAO, 0.3f, lightTransform);
 		drawBoard(boardShaderProgram, boardVAO);
 
 		glfwSwapBuffers(window);
