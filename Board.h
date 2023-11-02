@@ -34,9 +34,9 @@ string boardFsh = R"(
     in vec3 vPos;
     void main()
     {
-       float shininess = 8.0;
-       vec3 cameraPosition = vec3(0.0, 0.0, 2.5);
-       vec3 lightDirection = normalize(vec3(0.5, 0.7, 0.9));
+       float shininess = 4.0;
+       vec3 cameraPosition = vec3(0, 0.5, 0.8);
+       vec3 lightDirection = normalize(vec3(0.5, 0.5, 1));
        vec3 viewDirection = normalize(cameraPosition - vPos);
        vec3 normal = normalize(Normal);
        vec3 reflection = reflect(-lightDirection, normal);
@@ -47,7 +47,7 @@ string boardFsh = R"(
        vec3 diffuseColor = vec3(1.0);
        vec3 specularColor = vec3(1.0);        
 
-       vec3 diffuseResult = diffuseColor * max(dot(normal, lightDirection), 0.0);
+       vec3 diffuseResult = 0.4 * diffuseColor * max(dot(normal, lightDirection), 0.0);
        vec3 specularResult = specularColor * specular;
 
 

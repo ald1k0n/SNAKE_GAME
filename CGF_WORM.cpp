@@ -30,7 +30,7 @@ string fsh = R"(
 	}
 )";
 
-vec3 lightPosition = vec3(0.5, 0.7, 0.9);
+vec3 lightPosition = vec3(0.5, 0.5, 1);
 
 int main() {
 	GLuint boardShaderProgram, lightObjectProgram;
