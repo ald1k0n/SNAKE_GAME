@@ -14,42 +14,65 @@ class Shader
 private:
 	string vsh, fsh;
 
-	static unsigned int CompileShader(const string& source,
-		GLuint type) {
-		GLuint id = glCreateShader(type);
-		const char* src = source.c_str();
-		glShaderSource(id, 1, &src, nullptr);
-		glCompileShader(id);
-		int res;
-		glGetShaderiv(id, GL_COMPILE_STATUS, &res);
+    static unsigned int CompileShader(const string& source, GLuint type) {
+        GLuint id = glCreateShader(type);
+        const char* src = source.c_str();
+        glShaderSource(id, 1, &src, nullptr);
+        glCompileShader(id);
 
-		if (res == GL_FALSE) {
-			std::cerr << "Error happend in compiling shader";
-			glDeleteShader(id);
-			return 0;
-		}
+        int result;
+        glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+        if (result == GL_FALSE) {
+            int length;
+            glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
 
-		return id;
-	}
+            // Get the error message
+            std::vector<char> error(length);
+            glGetShaderInfoLog(id, length, &length, &error[0]);
 
-	static unsigned int CreateShader(const string& vertexShader,
-		const string& fragmentShader) {
+            std::cerr << "Error occurred while compiling shader:\n" << &error[0] << std::endl;
 
-		GLuint program = glCreateProgram();
-		GLuint vs = CompileShader(vertexShader, GL_VERTEX_SHADER);
-		GLuint fs = CompileShader(fragmentShader, GL_FRAGMENT_SHADER);
+            glDeleteShader(id);
+            return 0;
+        }
 
-		glAttachShader(program, vs);
-		glAttachShader(program, fs);
-		glLinkProgram(program);
-		glValidateProgram(program);
+        return id;
+    }
 
-		glDeleteShader(vs);
-		glDeleteShader(fs);
+    static unsigned int CreateShader(const string& vertexShader, const string& fragmentShader) {
+        GLuint program = glCreateProgram();
+        GLuint vs = CompileShader(vertexShader, GL_VERTEX_SHADER);
+        GLuint fs = CompileShader(fragmentShader, GL_FRAGMENT_SHADER);
 
-		return program;
-	}
+        glAttachShader(program, vs);
+        glAttachShader(program, fs);
+        glLinkProgram(program);
 
+        int result;
+        glGetProgramiv(program, GL_LINK_STATUS, &result);
+        if (result == GL_FALSE) {
+            int length;
+            glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+
+            // Get the error message
+            std::vector<char> error(length);
+            glGetProgramInfoLog(program, length, &length, &error[0]);
+
+            std::cerr << "Error occurred while linking shader program:\n" << &error[0] << std::endl;
+
+            glDeleteProgram(program);
+            glDeleteShader(vs);
+            glDeleteShader(fs);
+            return 0;
+        }
+
+        glValidateProgram(program);
+
+        glDeleteShader(vs);
+        glDeleteShader(fs);
+
+        return program;
+    }
 
 public: 
 	void setShaders(string vsh, string fsh) {

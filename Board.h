@@ -6,10 +6,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
-
+#include "stb_image.h"
 using namespace std;
 using namespace glm;
-
 
 string boardVsh = R"(
     #version 330 core
@@ -24,9 +23,11 @@ string boardVsh = R"(
 string boardFsh = R"(
     #version 330 core
     out vec4 FragColor;
+    uniform sampler2D texture1;
+    
     void main()
     {
-        FragColor = vec4(0.6f, 0.3f, 0.f, 1.f);
+        FragColor = texture(texture1, vec2(gl_FragCoord.x / textureSize(texture1, 0).x, 1.0 - gl_FragCoord.y / textureSize(texture1, 0).y));
     }
 )";
 
@@ -46,7 +47,7 @@ unsigned int boardIndices[] = {
     2, 3, 0
 };
 
-void bindBoard(GLuint& VAO, GLuint& VBO, GLuint& EBO, GLuint &program) {
+void bindBoard(GLuint& VAO, GLuint& VBO, GLuint& EBO, GLuint& program) {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -67,9 +68,28 @@ void bindBoard(GLuint& VAO, GLuint& VBO, GLuint& EBO, GLuint &program) {
     glUniformMatrix4fv(glGetUniformLocation(program, "transform"), 1, GL_FALSE, glm::value_ptr(cameraView));
 }
 
-void drawBoard(GLuint &program,GLuint &VAO) {
+void drawBoard(GLuint& program, GLuint& VAO) {
     glUseProgram(program);
     glUniformMatrix4fv(glGetUniformLocation(program, "transform"), 1, GL_FALSE, glm::value_ptr(cameraView));
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
+
+void loadTexture() {
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load("C:\\Users\\cjube\\OneDrive\\Рабочий стол\\texture\\texture.jpg", &width, &height, &nrChannels, 0);
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }

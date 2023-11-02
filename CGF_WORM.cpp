@@ -10,35 +10,19 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
+
+
 using namespace std;
 using namespace glm;
 
-string vsh = R"(
-    #version 330 core
-    layout(location = 0) in vec3 position;
-	uniform mat4 transform;
-
-    void main() {
-        gl_Position = transform * vec4(position, 1.0);
-    }
-)";
-
-
-string fsh = R"(
-	#version 330 core
-	layout(location = 0) out vec4 color;
-	void main() {
-		color = vec4(.3, 0.8, 0.01, 1.0);
-	}
-)";
 
 int main() {
-	GLuint boardShaderProgram, cubeShaderProgram;
-	GLuint boardVAO, boardVBO, boardEBO, cubeVAO, cubeVBO;
+	GLuint boardShaderProgram;
+	GLuint boardVAO, boardVBO, boardEBO;
 
 	mat4 cubeTransform = mat4(1);
 
-	Shader boardShader, cubeShader;
+	Shader boardShader;
 
 	GLFWwindow* window;
 	if (!glfwInit())
@@ -56,25 +40,21 @@ int main() {
 	glfwMakeContextCurrent(window);
 	glewInit();
 	glEnable(GL_DEPTH_TEST);
-	cubeShader.setShaders(vsh, fsh);
-	cubeShaderProgram = cubeShader.getProgram();
+
 
 	boardShader.setShaders(boardVsh, boardFsh);
 	boardShaderProgram = boardShader.getProgram();
-	glUniformMatrix4fv(glGetUniformLocation(cubeShaderProgram, "transform"), 1, GL_FALSE, value_ptr(cameraView));
-
-	bindCube(cubeVAO, cubeVBO, .5f);
 	bindBoard(boardVAO, boardVBO, boardEBO, boardShaderProgram);
-	
+	loadTexture();
+
 	glUseProgram(boardShaderProgram);
-	glUseProgram(cubeShaderProgram);
+	glUniform1i(glGetUniformLocation(boardShaderProgram, "texture1"), 0);
 
 	while (!glfwWindowShouldClose(window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		
 		drawBoard(boardShaderProgram, boardVAO);
-		drawCube(cubeShaderProgram, cubeVAO,.5f, cameraView);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
