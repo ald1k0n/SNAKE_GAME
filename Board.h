@@ -29,9 +29,10 @@ string boardFsh = R"(
     #version 330 core
     out vec4 FragColor;
     uniform sampler2D texture1;
-
+    uniform sampler2D normalMap; 
     in vec3 Normal;
     in vec3 vPos;
+
     void main()
     {
        float shininess = 4.0;
@@ -39,8 +40,13 @@ string boardFsh = R"(
        vec3 lightDirection = normalize(vec3(0.5, 0.5, 1));
        vec3 viewDirection = normalize(cameraPosition - vPos);
        vec3 normal = normalize(Normal);
-       vec3 reflection = reflect(-lightDirection, normal);
 
+       vec2 rotatedTexCoord = vec2(1.0 - gl_FragCoord.x / textureSize(texture1, 0).x, 1.0 - gl_FragCoord.y / textureSize(texture1, 0).y);
+       vec3 normalMapColor = texture(normalMap, rotatedTexCoord).xyz;
+
+       vec3 normalMapNormal = normalize(normalMapColor * 2.0 - 1.0);
+
+       vec3 reflection = reflect(-lightDirection, normalMapNormal);
 
        float specular = pow(max(dot(viewDirection, reflection), 0.0), shininess);
 
@@ -50,10 +56,11 @@ string boardFsh = R"(
        vec3 diffuseResult = 0.4 * diffuseColor * max(dot(normal, lightDirection), 0.0);
        vec3 specularResult = specularColor * specular;
 
-
        vec3 resultColor = diffuseResult + specularResult;
-       vec3 texColor = texture(texture1, gl_FragCoord.xy / textureSize(texture1, 0)).xyz;
+
+       vec3 texColor = texture(texture1, rotatedTexCoord).xyz;
        resultColor *= texColor;
+
        FragColor = vec4(resultColor , 1.0);
     }
 )";
@@ -120,19 +127,19 @@ void drawBoard(GLuint& program, GLuint& VAO) {
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
-
-void loadTexture() {
+GLuint normalMapTexture;
+void loadNormalMapTexture() {
     int width, height, nrChannels;
-    unsigned char* data = stbi_load("C:\\Users\\cjube\\OneDrive\\Рабочий стол\\texture\\texture.jpg", &width, &height, &nrChannels, 0);
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    unsigned char* data = stbi_load("C:\\Users\\cjube\\OneDrive\\Рабочий стол\\texture\\ground_normal.jpg", &width, &height, &nrChannels, 0);
+   
+    glGenTextures(1, &normalMapTexture);
+    glBindTexture(GL_TEXTURE_2D, normalMapTexture);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else {
-        std::cout << "Failed to load texture" << std::endl;
+        cout << "Failed to load normal map texture" << endl;
     }
     stbi_image_free(data);
 
@@ -140,3 +147,33 @@ void loadTexture() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
+GLuint texture;
+void loadTexture() {
+    int width, height, nrChannels;
+
+    unsigned char* data = stbi_load("C:\\Users\\cjube\\OneDrive\\Рабочий стол\\texture\\ground.jpg", &width, &height, &nrChannels, 0);
+    
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else {
+        cout << "Failed to load texture" << endl;
+    }
+    stbi_image_free(data);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
+void bindTextures(GLuint& program) {
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glUniform1i(glGetUniformLocation(program, "texture1"), 0);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, normalMapTexture);
+    glUniform1i(glGetUniformLocation(program, "normalMap"), 1);
+}

@@ -67,11 +67,10 @@ int main() {
 
 	bindBoard(boardVAO, boardVBO, boardEBO, boardShaderProgram);
 	loadTexture();
-
+	loadNormalMapTexture();
 	glUseProgram(lightObjectProgram);
 	glUseProgram(boardShaderProgram);
-	glUniform1i(glGetUniformLocation(boardShaderProgram, "texture1"), 0);
-
+	bindTextures(boardShaderProgram);
 	lightTransform = translate(cameraView, lightPosition);
 
 	while (!glfwWindowShouldClose(window)) {
