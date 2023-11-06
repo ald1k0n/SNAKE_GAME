@@ -10,7 +10,15 @@
 using namespace std;
 using namespace glm;
 
-void controll(GLFWwindow* window, mat4& wormTransform) {
+vec3 getRandomGridPosition() {
+	float x = static_cast<float>(rand() % 10) * 0.2f - 1.0f;
+	float y = static_cast<float>(rand() % 10) * 0.2f - 1.0f;
+	float z = 0.2f;
+
+	return vec3(x, y, z);
+}
+
+void controll(GLFWwindow* window, mat4& wormTransform, vec3& treatPosition) { // Здесь кароч над как-то починить treatPosition при попадании в координаты
 	float step = 0.1f / 100;
 	int horizontal = 0;
 	int vertical = 0;
@@ -35,8 +43,8 @@ void controll(GLFWwindow* window, mat4& wormTransform) {
 			horizontal = 0;
 		}
 	}
-
-	wormTransform = translate(wormTransform, vec3(step * horizontal, step * vertical, 0));
+	vec3 wormPos = vec3(step * horizontal, step * vertical, 0);
+	wormTransform = translate(wormTransform, wormPos);
 
 	vec3 objectPosition = vec3(wormTransform[3]);
 

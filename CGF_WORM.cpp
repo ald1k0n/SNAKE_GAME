@@ -11,6 +11,10 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
+#include <cstdlib>
+#include <ctime>
+
+
 using namespace std;
 using namespace glm;
 
@@ -33,16 +37,6 @@ string fsh = R"(
 
 vec3 lightPosition = vec3(0.5, 0.5, 1);
 
-
-string wormVSH = R"(
-	#version 330 core
-	layout(location = 0) in vec3 pos;
-	uniform mat4 transform;
-	void main(){
-		gl_Position = transform * vec4(pos, 1.0);
-	}
-)";
-
 string wormFSH = R"(
 	#version 330 core
 	out vec4 color;
@@ -51,15 +45,24 @@ string wormFSH = R"(
 	}
 )";
 
+string treatFSH = R"(
+	#version 330 core
+	out vec4 color;
+	void main() {
+		color = vec4(1, 0, 0, 1);
+	}
+)";
+
+
 
 int main() {
-	GLuint boardShaderProgram, lightObjectProgram, wormObjectProgram;
+	GLuint boardShaderProgram, lightObjectProgram, wormObjectProgram, treatProgram;
 	GLuint boardVAO, boardVBO, boardEBO, lightObjVAO, lightObjVBO, 
-		wormVAO, wormVBO;
+		wormVAO, wormVBO, treatVAO, treatVBO;
 
-	mat4 lightTransform = mat4(1), wormTransform = mat4(1);
+	mat4 lightTransform = mat4(1), wormTransform = mat4(1), treatTransform = mat4(1);
 
-	Shader boardShader, lightShader, wormShader;
+	Shader boardShader, lightShader, wormShader, treatShader;
 
 	GLFWwindow* window;
 	if (!glfwInit())
@@ -78,6 +81,9 @@ int main() {
 	glewInit();
 	glEnable(GL_DEPTH_TEST);
 
+	srand(static_cast<unsigned>(time(nullptr)));
+	vec3 treatPosition = getRandomGridPosition();
+	cout << treatPosition.x << " " << treatPosition.y <<" " << treatPosition.z;
 
 	boardShader.setShaders(boardVsh, boardFsh);
 	boardShaderProgram = boardShader.getProgram();
@@ -87,10 +93,16 @@ int main() {
 	bindCube(lightObjVAO, lightObjVBO, 0.3f);
 
 	//worm
-	wormShader.setShaders(wormVSH, wormFSH);
+	wormShader.setShaders(vsh, wormFSH);
 	wormObjectProgram = wormShader.getProgram();
 	bindCube(wormVAO, wormVBO, 0.1f);
 	
+	//Treat
+	treatShader.setShaders(vsh, treatFSH);
+	treatProgram = treatShader.getProgram();
+	bindCube(treatVAO, treatVBO, 0.1f);
+
+
 	bindBoard(boardVAO, boardVBO, boardEBO, boardShaderProgram);
 	loadTexture();
 	loadNormalMapTexture();
@@ -101,7 +113,10 @@ int main() {
 	// All transforms must be applied here
 	lightTransform = translate(cameraView, lightPosition);
 	lightTransform = translate(lightTransform, vec3(0, 0.4, 0.2));
-	wormTransform = translate(cameraView, vec3(0,0,0.2));
+
+	wormTransform = translate(cameraView, vec3(0, 0, 0.2));
+
+	treatTransform = translate(cameraView, treatPosition);
 
 	while (!glfwWindowShouldClose(window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -111,7 +126,12 @@ int main() {
 
 		// Draw worm
 		drawCube(wormObjectProgram, wormVAO, 0.1f, wormTransform);
-		controll(window, wormTransform);
+		controll(window, wormTransform, treatPosition);
+
+		// Draw Treat
+		treatTransform = translate(cameraView, treatPosition);
+		drawCube(treatProgram, treatVAO, 0.1f, treatTransform);
+
 
 		// Board
 		drawBoard(boardShaderProgram, boardVAO);
