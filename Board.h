@@ -130,7 +130,7 @@ void drawBoard(GLuint& program, GLuint& VAO) {
 GLuint normalMapTexture;
 void loadNormalMapTexture() {
     int width, height, nrChannels;
-    unsigned char* data = stbi_load("C:\\Users\\cjube\\OneDrive\\Рабочий стол\\texture\\ground_normal.jpg", &width, &height, &nrChannels, 0);
+    unsigned char* data = stbi_load("C:\\Users\\cjube\\OneDrive\\Рабочий стол\\texture\\normal.jpg", &width, &height, &nrChannels, 0);
    
     glGenTextures(1, &normalMapTexture);
     glBindTexture(GL_TEXTURE_2D, normalMapTexture);
@@ -151,7 +151,7 @@ GLuint texture;
 void loadTexture() {
     int width, height, nrChannels;
 
-    unsigned char* data = stbi_load("C:\\Users\\cjube\\OneDrive\\Рабочий стол\\texture\\ground.jpg", &width, &height, &nrChannels, 0);
+    unsigned char* data = stbi_load("C:\\Users\\cjube\\OneDrive\\Рабочий стол\\texture\\texture.jpg", &width, &height, &nrChannels, 0);
     
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
