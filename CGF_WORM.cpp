@@ -18,6 +18,8 @@
 using namespace std;
 using namespace glm;
 
+
+
 string vsh = R"(
 	#version 330 core
 	layout(location = 0) in vec3 pos;
@@ -56,6 +58,7 @@ string treatFSH = R"(
 
 
 int main() {
+	int score = 0;
 	GLuint boardShaderProgram, lightObjectProgram, wormObjectProgram, treatProgram;
 	GLuint boardVAO, boardVBO, boardEBO, lightObjVAO, lightObjVBO, 
 		wormVAO, wormVBO, treatVAO, treatVBO;
@@ -80,10 +83,10 @@ int main() {
 	glfwMakeContextCurrent(window);
 	glewInit();
 	glEnable(GL_DEPTH_TEST);
+	glfwSetKeyCallback(window, keyCallback);
 
 	srand(static_cast<unsigned>(time(nullptr)));
 	vec3 treatPosition = getRandomGridPosition();
-	cout << treatPosition.x << " " << treatPosition.y <<" " << treatPosition.z;
 
 	boardShader.setShaders(boardVsh, boardFsh);
 	boardShaderProgram = boardShader.getProgram();
@@ -115,8 +118,24 @@ int main() {
 	lightTransform = translate(lightTransform, vec3(0, 0.4, 0.2));
 
 	wormTransform = translate(cameraView, vec3(0, 0, 0.2));
+	cout << "worm: " <<endl;
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			std::cout << wormTransform[i][j] << " ";
+		}
+		std::cout << std::endl;
+	}
+
 
 	treatTransform = translate(cameraView, treatPosition);
+	cout << "treat: " << endl;
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			std::cout << treatTransform[i][j] << " ";
+		}
+		std::cout << std::endl;
+	}
+
 
 	while (!glfwWindowShouldClose(window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -126,7 +145,7 @@ int main() {
 
 		// Draw worm
 		drawCube(wormObjectProgram, wormVAO, 0.1f, wormTransform);
-		controll(window, wormTransform, treatPosition);
+		controll(window, wormTransform, treatTransform, treatPosition, score);
 
 		// Draw Treat
 		treatTransform = translate(cameraView, treatPosition);

@@ -6,9 +6,15 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <iomanip>
+#include <algorithm>
 
 using namespace std;
 using namespace glm;
+
+float step = .1f / 500.f;
+int horizontal = 0;
+int vertical = 0;
 
 vec3 getRandomGridPosition() {
 	float x = static_cast<float>(rand() % 10) * 0.2f - 1.0f;
@@ -18,38 +24,47 @@ vec3 getRandomGridPosition() {
 	return vec3(x, y, z);
 }
 
-void controll(GLFWwindow* window, mat4& wormTransform, vec3& treatPosition) { // Здесь кароч над как-то починить treatPosition при попадании в координаты
-	float step = 0.1f / 100;
-	int horizontal = 0;
-	int vertical = 0;
 
-	if (glfwGetKey(window, GLFW_KEY_LEFT)) {
-		horizontal = -1;
-	}
-	if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
-		horizontal = 1;
-	}
-	if (glfwGetKey(window, GLFW_KEY_UP)) {
-		vertical = 1;
-	}
-	if (glfwGetKey(window, GLFW_KEY_DOWN)) {
-		vertical = -1;
-	}
-	if (horizontal != 0 && vertical != 0) {
-		if (abs(horizontal) > abs(vertical)) {
-			vertical = 0;
-		}
-		else {
-			horizontal = 0;
-		}
-	}
-	vec3 wormPos = vec3(step * horizontal, step * vertical, 0);
-	wormTransform = translate(wormTransform, wormPos);
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (action == GLFW_RELEASE) {
+        int newHorizontal = 0;
+        int newVertical = 0;
 
-	vec3 objectPosition = vec3(wormTransform[3]);
+        if (key == GLFW_KEY_LEFT) {
+            newHorizontal = -1;
+        }
+        else if (key == GLFW_KEY_RIGHT) {
+            newHorizontal = 1;
+        }
+        else if (key == GLFW_KEY_UP) {
+            newVertical = 1;
+        }
+        else if (key == GLFW_KEY_DOWN) {
+            newVertical = -1;
+        }
 
-	if (abs(objectPosition.x) >= 1.99f || abs(objectPosition.y) >= 1.49f) {
-		cout << "Game Over";
-		exit(0);
-	}
+        if (newHorizontal != -horizontal || newVertical != -vertical) {
+            horizontal = newHorizontal;
+            vertical = newVertical;
+        }
+    }
+}
+
+void controll(GLFWwindow* window, mat4& wormTransform, mat4& treatTransform, vec3& treatPosition, int& score) {
+    vec3 wormPos = vec3(::step * horizontal, ::step * vertical, 0);
+    vec3 newWormPosition = vec3(wormTransform[3]) + wormPos;
+
+    vec3 treatPos = vec3(treatTransform[3]);
+
+    if (newWormPosition.x >= -1.99f && newWormPosition.x <= 1.99f &&
+        newWormPosition.y >= -1.59f && newWormPosition.y <= 1.59f) {
+        wormTransform = translate(wormTransform, wormPos);
+    }
+
+
+    if (abs(newWormPosition.x - treatPos.x) <= 0.2f && abs(newWormPosition.y - treatPos.y) <= 0.2f) {
+        score++;
+        cout << score << endl;
+        treatPosition = getRandomGridPosition();
+    }
 }
