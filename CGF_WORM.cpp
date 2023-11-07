@@ -24,14 +24,17 @@ string vsh = R"(
 	#version 330 core
 	layout(location = 0) in vec3 pos;
 	uniform mat4 transform;
+	out vec3 vPos;
 	void main() {
 		gl_Position = transform * vec4(pos, 1.0);
+		vPos = pos;
 	}
 )";
 
 string fsh = R"(
 	#version 330 core
 	out vec4 color;
+	
 	void main() {
 		color = vec4(1.0);
 	}
@@ -42,26 +45,59 @@ vec3 lightPosition = vec3(0.5, 0.5, 1);
 string wormFSH = R"(
 	#version 330 core
 	out vec4 color;
+	in vec3 vPos;
+
 	void main() {
-		color = vec4(1, 0.5, 0.0, 1.0);
+		float shininess = 8.0;
+		vec3 cameraPosition = vec3(0, 0.5, 0.8);
+		vec3 lightDirection = normalize(vec3(0.5, 0.0, 1) - vPos);
+		vec3 viewDirection = normalize(cameraPosition - vPos);
+		vec3 norm = normalize(vPos);
+		
+		float diff = max(dot(norm, lightDirection), 0.0);
+
+		vec3 diffuse = diff * vec3(1) * vec3(0.8, 0.5, 0.0);
+		vec3 reflectDir = reflect(-lightDirection, norm);
+
+		float spec = pow(max(dot(viewDirection, reflectDir), 0.0), shininess);
+
+		vec3 specular = spec * vec3(1);
+		vec3 result = (diffuse + specular) + vec3(0.8, 0.3, 0.0);
+
+		color = vec4(result, 1.0);
 	}
 )";
 
 string treatFSH = R"(
 	#version 330 core
 	out vec4 color;
+	in vec3 vPos;
 	void main() {
-		color = vec4(1, 0, 0, 1);
+		float shininess = 8.0;
+		vec3 cameraPosition = vec3(0, 0.5, 0.8);
+		vec3 lightDirection = normalize(vec3(0.5, 0, 1) - vPos);
+		vec3 viewDirection = normalize(cameraPosition - vPos);
+		vec3 norm = normalize(vPos);
+
+		float diff = max(dot(norm, lightDirection), 0.0);		
+		vec3 diffuse = diff * vec3(1) * vec3(0.8, 0.0, 0.0);
+		vec3 reflectDir = reflect(-lightDirection, norm);
+
+		float spec = pow(max(dot(viewDirection, reflectDir), 0.0), shininess);		
+		vec3 specular = spec * vec3(1);
+		vec3 result = (diffuse + specular) + vec3(0.8, 0, 0.0);
+		color = vec4(result, 1);
 	}
 )";
-
-
 
 int main() {
 	int score = 0;
 	GLuint boardShaderProgram, lightObjectProgram, wormObjectProgram, treatProgram;
 	GLuint boardVAO, boardVBO, boardEBO, lightObjVAO, lightObjVBO, 
 		wormVAO, wormVBO, treatVAO, treatVBO;
+
+
+
 
 	mat4 lightTransform = mat4(1), wormTransform = mat4(1), treatTransform = mat4(1);
 
@@ -99,11 +135,12 @@ int main() {
 	wormShader.setShaders(vsh, wormFSH);
 	wormObjectProgram = wormShader.getProgram();
 	bindCube(wormVAO, wormVBO, 0.1f);
-	
+
 	//Treat
 	treatShader.setShaders(vsh, treatFSH);
 	treatProgram = treatShader.getProgram();
 	bindCube(treatVAO, treatVBO, 0.1f);
+
 
 
 	bindBoard(boardVAO, boardVBO, boardEBO, boardShaderProgram);
@@ -121,9 +158,9 @@ int main() {
 	cout << "worm: " <<endl;
 	for (int i = 0; i < 4; ++i) {
 		for (int j = 0; j < 4; ++j) {
-			std::cout << wormTransform[i][j] << " ";
+			cout << wormTransform[i][j] << " ";
 		}
-		std::cout << std::endl;
+		cout << endl;
 	}
 
 
@@ -131,10 +168,11 @@ int main() {
 	cout << "treat: " << endl;
 	for (int i = 0; i < 4; ++i) {
 		for (int j = 0; j < 4; ++j) {
-			std::cout << treatTransform[i][j] << " ";
+			cout << treatTransform[i][j] << " ";
 		}
-		std::cout << std::endl;
+		cout << endl;
 	}
+
 
 
 	while (!glfwWindowShouldClose(window)) {
@@ -147,8 +185,13 @@ int main() {
 		drawCube(wormObjectProgram, wormVAO, 0.1f, wormTransform);
 		controll(window, wormTransform, treatTransform, treatPosition, score);
 
+
+	
+
 		// Draw Treat
 		treatTransform = translate(cameraView, treatPosition);
+
+
 		drawCube(treatProgram, treatVAO, 0.1f, treatTransform);
 
 
