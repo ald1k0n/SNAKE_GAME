@@ -96,9 +96,6 @@ int main() {
 	GLuint boardVAO, boardVBO, boardEBO, lightObjVAO, lightObjVBO, 
 		wormVAO, wormVBO, treatVAO, treatVBO;
 
-
-
-
 	mat4 lightTransform = mat4(1), wormTransform = mat4(1), treatTransform = mat4(1);
 
 	Shader boardShader, lightShader, wormShader, treatShader;
@@ -129,7 +126,7 @@ int main() {
 	
 	lightShader.setShaders(vsh, fsh);
 	lightObjectProgram = lightShader.getProgram();
-	bindCube(lightObjVAO, lightObjVBO, 0.3f);
+	bindCube(lightObjVAO, lightObjVBO, 0.2f);
 
 	//worm
 	wormShader.setShaders(vsh, wormFSH);
@@ -141,8 +138,6 @@ int main() {
 	treatProgram = treatShader.getProgram();
 	bindCube(treatVAO, treatVBO, 0.1f);
 
-
-
 	bindBoard(boardVAO, boardVBO, boardEBO, boardShaderProgram);
 	loadTexture();
 	loadNormalMapTexture();
@@ -152,52 +147,27 @@ int main() {
 	
 	// All transforms must be applied here
 	lightTransform = translate(cameraView, lightPosition);
-	lightTransform = translate(lightTransform, vec3(0, 0.4, 0.2));
-
 	wormTransform = translate(cameraView, vec3(0, 0, 0.2));
-	cout << "worm: " <<endl;
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			cout << wormTransform[i][j] << " ";
-		}
-		cout << endl;
-	}
-
 
 	treatTransform = translate(cameraView, treatPosition);
-	cout << "treat: " << endl;
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			cout << treatTransform[i][j] << " ";
-		}
-		cout << endl;
-	}
-
-
 
 	while (!glfwWindowShouldClose(window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Draw light
-		drawCube(lightObjectProgram, lightObjVAO, 0.3f, lightTransform);
+		drawCube(lightObjectProgram, lightObjVAO, 0.2f, lightTransform);
 
 		// Draw worm
 		drawCube(wormObjectProgram, wormVAO, 0.1f, wormTransform);
 		controll(window, wormTransform, treatTransform, treatPosition, score);
 
-
-	
-
 		// Draw Treat
 		treatTransform = translate(cameraView, treatPosition);
 
-
 		drawCube(treatProgram, treatVAO, 0.1f, treatTransform);
-
-
+		
 		// Board
 		drawBoard(boardShaderProgram, boardVAO);
-
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

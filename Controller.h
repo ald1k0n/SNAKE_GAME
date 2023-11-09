@@ -12,13 +12,13 @@
 using namespace std;
 using namespace glm;
 
-float step = .1f / 500.f;
+float step = .1f / 200.f;
 int horizontal = 0;
 int vertical = 0;
 
 vec3 getRandomGridPosition() {
-	float x = static_cast<float>(rand() % 10) * 0.2f - 1.0f;
-	float y = static_cast<float>(rand() % 10) * 0.2f - 1.0f;
+	float x = static_cast<float>(rand() % 10) * 0.2f - 1.f;
+	float y = static_cast<float>(rand() % 10) * 0.2f - 1.f;
 	float z = 0.2f;
 
 	return vec3(x, y, z);
@@ -56,8 +56,8 @@ void controll(GLFWwindow* window, mat4& wormTransform, mat4& treatTransform, vec
 
     vec3 treatPos = vec3(treatTransform[3]);
 
-    if (newWormPosition.x >= -1.99f && newWormPosition.x <= 1.99f &&
-        newWormPosition.y >= -1.59f && newWormPosition.y <= 1.59f) {
+    if (newWormPosition.x >= -2.29f && newWormPosition.x <= 2.29f &&
+        newWormPosition.y >= -1.69f && newWormPosition.y <= 1.79f) {
         wormTransform = translate(wormTransform, wormPos);
     }
 

@@ -118,6 +118,7 @@ void bindBoard(GLuint& VAO, GLuint& VBO, GLuint& EBO, GLuint& program) {
     glBindVertexArray(0);
 
     cameraView *= projection * view;
+    cameraView = scale(cameraView, vec3(1.2));
     glUniformMatrix4fv(glGetUniformLocation(program, "transform"), 1, GL_FALSE, value_ptr(cameraView));
 }
 
