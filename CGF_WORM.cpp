@@ -14,20 +14,19 @@
 #include <cstdlib>
 #include <ctime>
 
-
 using namespace std;
 using namespace glm;
-
-
 
 string vsh = R"(
 	#version 330 core
 	layout(location = 0) in vec3 pos;
 	uniform mat4 transform;
 	out vec3 vPos;
+	out vec2 TexCoord;
 	void main() {
 		gl_Position = transform * vec4(pos, 1.0);
 		vPos = pos;
+		TexCoord = vec2((pos.x + 1.0) / 2.0, (pos.y + 1.0) / 2.0);
 	}
 )";
 
@@ -42,53 +41,60 @@ string fsh = R"(
 
 vec3 lightPosition = vec3(0.5, 0.5, 1);
 
-string wormFSH = R"(
-	#version 330 core
-	out vec4 color;
-	in vec3 vPos;
-
-	void main() {
-		float shininess = 8.0;
-		vec3 cameraPosition = vec3(0, 0.5, 0.8);
-		vec3 lightDirection = normalize(vec3(0.5, 0.0, 1) - vPos);
-		vec3 viewDirection = normalize(cameraPosition - vPos);
-		vec3 norm = normalize(vPos);
-		
-		float diff = max(dot(norm, lightDirection), 0.0);
-
-		vec3 diffuse = diff * vec3(1) * vec3(0.8, 0.5, 0.0);
-		vec3 reflectDir = reflect(-lightDirection, norm);
-
-		float spec = pow(max(dot(viewDirection, reflectDir), 0.0), shininess);
-
-		vec3 specular = spec * vec3(1);
-		vec3 result = (diffuse + specular) + vec3(0.8, 0.3, 0.0);
-
-		color = vec4(result, 1.0);
-	}
-)";
-
 string treatFSH = R"(
 	#version 330 core
 	out vec4 color;
 	in vec3 vPos;
+	in vec2 TexCoord;
+	uniform sampler2D textureMap;
+	uniform sampler2D normalMapTexture;
+	uniform vec3 customColor;
+
 	void main() {
-		float shininess = 8.0;
+		float shininess = 4.0;
 		vec3 cameraPosition = vec3(0, 0.5, 0.8);
 		vec3 lightDirection = normalize(vec3(0.5, 0, 1) - vPos);
 		vec3 viewDirection = normalize(cameraPosition - vPos);
 		vec3 norm = normalize(vPos);
 
-		float diff = max(dot(norm, lightDirection), 0.0);		
+		float diff = max(dot(norm, lightDirection), 0.0);
 		vec3 diffuse = diff * vec3(1) * vec3(0.8, 0.0, 0.0);
 		vec3 reflectDir = reflect(-lightDirection, norm);
 
-		float spec = pow(max(dot(viewDirection, reflectDir), 0.0), shininess);		
+		float spec = pow(max(dot(viewDirection, reflectDir), 0.0), shininess);
 		vec3 specular = spec * vec3(1);
-		vec3 result = (diffuse + specular) + vec3(0.8, 0, 0.0);
+		vec3 result = (diffuse + specular) + customColor;
+
+		vec3 textureColor = texture(textureMap, TexCoord).rgb;
+
+		vec3 normalMap = texture(normalMapTexture, TexCoord).rgb;
+		normalMap = normalize(normalMap * 2.0 - 1.0);
+
+		result += textureColor * normalMap;
+
 		color = vec4(result, 1);
 	}
 )";
+
+void loadTextureMap(GLuint& texture) {
+	int width, height, nrChannels;
+
+	unsigned char* data = stbi_load("C:\\Users\\cjube\\OneDrive\\Рабочий стол\\texture\\cc.png", &width, &height, &nrChannels, 0);
+
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		cout << "Failed to load texture" << endl;
+	}
+	stbi_image_free(data);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
 
 int main() {
 	int score = 0;
@@ -129,7 +135,7 @@ int main() {
 	bindCube(lightObjVAO, lightObjVBO, 0.2f);
 
 	//worm
-	wormShader.setShaders(vsh, wormFSH);
+	wormShader.setShaders(vsh, treatFSH);
 	wormObjectProgram = wormShader.getProgram();
 	bindCube(wormVAO, wormVBO, 0.1f);
 
@@ -149,7 +155,35 @@ int main() {
 	lightTransform = translate(cameraView, lightPosition);
 	wormTransform = translate(cameraView, vec3(0, 0, 0.2));
 
-	treatTransform = translate(cameraView, treatPosition);
+	GLuint normalMapTreat, textureMapTreat;
+	loadTextureMap(textureMapTreat);
+	loadTextureMap(normalMapTreat);
+	glUseProgram(treatProgram);
+	//"normalMapTexture"
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glUniform1i(glGetUniformLocation(treatProgram, "textureMap"), 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, normalMapTexture);
+	glUniform1i(glGetUniformLocation(treatProgram, "normalMapTexture"), 1);
+	glUniform3f(glGetUniformLocation(treatProgram, "customColor"), 0.3f, 0.0f, 0.0f);
+
+	
+	glUseProgram(wormObjectProgram);
+	
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glUniform1i(glGetUniformLocation(wormObjectProgram, "textureMap"), 0);
+
+
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, normalMapTexture);
+	glUniform1i(glGetUniformLocation(wormObjectProgram, "normalMapTexture"), 1);
+	glUniform3f(glGetUniformLocation(wormObjectProgram, "customColor"), 0.3, 0.2, 0.3);
+
 
 	while (!glfwWindowShouldClose(window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -165,7 +199,7 @@ int main() {
 		treatTransform = translate(cameraView, treatPosition);
 
 		drawCube(treatProgram, treatVAO, 0.1f, treatTransform);
-		
+
 		// Board
 		drawBoard(boardShaderProgram, boardVAO);
 

@@ -10,6 +10,9 @@
 using namespace std;
 using namespace glm;
 
+GLuint fboProgram;
+GLuint fboVAO, fboVBO;
+
 string boardVsh = R"(
     #version 330 core
     layout(location = 0) in vec3 aPos;
@@ -65,6 +68,7 @@ string boardFsh = R"(
     }
 )";
 
+
 mat4 cameraView = mat4(1);
 mat4 projection = perspective(radians(50.0f), 1.0f, 1.0f, 10.0f);
 mat4 view = lookAt(vec3(0, -2, 2.5), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -87,6 +91,7 @@ unsigned int boardIndices[] = {
     0, 1, 2,
     2, 3, 0
 };
+
 
 void bindBoard(GLuint& VAO, GLuint& VBO, GLuint& EBO, GLuint& program) {
     glGenVertexArrays(1, &VAO);
