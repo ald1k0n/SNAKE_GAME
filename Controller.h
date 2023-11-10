@@ -8,13 +8,21 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <array>
+
+std::array<double, 10> lastMoveTime = { 0, 0, 0, 0,0, 0, 0, 0,0,0 }; // Время последнего движения для каждого сегмента
+double lastTailMoveTime = 0.0; // Время последнего движения хвоста
+const double tailMoveDelay = 0.05; // Задержка между обновлениями хвоста
 
 using namespace std;
 using namespace glm;
 
-float step = .1f / 200.f;
+vector<mat4> wormSegmentTransforms(10, mat4(1.0f));
+
+float step1 = .1f / 500.f;
 int horizontal = 0;
 int vertical = 0;
+
 
 vec3 getRandomGridPosition() {
 	float x = static_cast<float>(rand() % 10) * 0.2f - 1.f;
@@ -50,21 +58,59 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
     }
 }
 
-void controll(GLFWwindow* window, mat4& wormTransform, mat4& treatTransform, vec3& treatPosition, int& score) {
-    vec3 wormPos = vec3(::step * horizontal, ::step * vertical, 0);
-    vec3 newWormPosition = vec3(wormTransform[3]) + wormPos;
+
+
+void updateWormSegments() {
+    // Сохраняем предыдущую позицию головы
+    mat4 previousTransform = wormSegmentTransforms[0];
+
+    // Обновляем позиции хвостовых сегментов
+    for (size_t i = wormSegmentTransforms.size() - 1; i >= 1; --i) {
+        wormSegmentTransforms[i] = wormSegmentTransforms[i - 1];
+    }
+
+    // Обновляем позицию головы
+    wormSegmentTransforms[0] = translate(wormSegmentTransforms[0], vec3(step1 * horizontal, step1 * vertical, 0));
+}
+
+void updateTail(double currentTime) {
+    if (currentTime - lastTailMoveTime >= tailMoveDelay) {
+        // Перемещаем каждый сегмент на позицию предыдущего
+        for (size_t i = wormSegmentTransforms.size() - 1; i > 0; --i) {
+            wormSegmentTransforms[i] = wormSegmentTransforms[i - 1];
+        }
+
+        lastTailMoveTime = currentTime; // Обновляем время последнего движения хвоста
+    }
+}
+
+bool controlHead(GLFWwindow* window, mat4& wormHeadTransform, mat4& treatTransform, vec3& treatPosition, int& score, double currentTime) {
+    vec3 headPos = vec3(step1 * horizontal, step1 * vertical, 0);
+    vec3 newHeadPosition = vec3(wormHeadTransform[3]) + headPos;
+    lastMoveTime[0] = currentTime;
+
+    // Проверяем, что новая позиция находится в пределах поля
+    bool moved = false;
+    if (newHeadPosition.x >= -2.29f && newHeadPosition.x <= 2.29f &&
+        newHeadPosition.y >= -1.89f && newHeadPosition.y <= 1.79f) {
+        wormHeadTransform = translate(wormHeadTransform, headPos);
+        moved = true;
+        
+    }
 
     vec3 treatPos = vec3(treatTransform[3]);
 
-    if (newWormPosition.x >= -2.29f && newWormPosition.x <= 2.29f &&
-        newWormPosition.y >= -1.69f && newWormPosition.y <= 1.79f) {
-        wormTransform = translate(wormTransform, wormPos);
+    if (newHeadPosition.x >= -2.29f && newHeadPosition.x <= 2.29f &&
+        newHeadPosition.y >= -1.69f && newHeadPosition.y <= 1.89f) {
+        wormHeadTransform = translate(wormHeadTransform, headPos);
     }
 
-
-    if (abs(newWormPosition.x - treatPos.x) <= 0.2f && abs(newWormPosition.y - treatPos.y) <= 0.2f) {
+    if (abs(newHeadPosition.x - treatPos.x) <= 0.3f && abs(newHeadPosition.y - treatPos.y) <= 0.3f) {
         score++;
         cout << score << endl;
         treatPosition = getRandomGridPosition();
     }
+
+    return moved;
+
 }

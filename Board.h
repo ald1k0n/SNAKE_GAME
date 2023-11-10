@@ -10,9 +10,6 @@
 using namespace std;
 using namespace glm;
 
-GLuint fboProgram;
-GLuint fboVAO, fboVBO;
-
 string boardVsh = R"(
     #version 330 core
     layout(location = 0) in vec3 aPos;
@@ -68,7 +65,6 @@ string boardFsh = R"(
     }
 )";
 
-
 mat4 cameraView = mat4(1);
 mat4 projection = perspective(radians(50.0f), 1.0f, 1.0f, 10.0f);
 mat4 view = lookAt(vec3(0, -2, 2.5), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -91,7 +87,6 @@ unsigned int boardIndices[] = {
     0, 1, 2,
     2, 3, 0
 };
-
 
 void bindBoard(GLuint& VAO, GLuint& VBO, GLuint& EBO, GLuint& program) {
     glGenVertexArrays(1, &VAO);
@@ -136,7 +131,7 @@ void drawBoard(GLuint& program, GLuint& VAO) {
 GLuint normalMapTexture;
 void loadNormalMapTexture() {
     int width, height, nrChannels;
-    unsigned char* data = stbi_load("C:\\Users\\cjube\\OneDrive\\Рабочий стол\\texture\\normal.jpg", &width, &height, &nrChannels, 0);
+    unsigned char* data = stbi_load("C:\\Users\\cjube\\OneDrive\\Рабочий стол\\CGF_WORM — копия\\normal.jpg", &width, &height, &nrChannels, 0);
    
     glGenTextures(1, &normalMapTexture);
     glBindTexture(GL_TEXTURE_2D, normalMapTexture);
@@ -157,7 +152,7 @@ GLuint texture;
 void loadTexture() {
     int width, height, nrChannels;
 
-    unsigned char* data = stbi_load("C:\\Users\\cjube\\OneDrive\\Рабочий стол\\texture\\texture.jpg", &width, &height, &nrChannels, 0);
+    unsigned char* data = stbi_load("C:\\Users\\cjube\\OneDrive\\Рабочий стол\\CGF_WORM — копия\\texture.jpg", &width, &height, &nrChannels, 0);
     
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
